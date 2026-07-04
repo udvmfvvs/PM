@@ -1,6 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   DndContext,
   DragOverlay,
@@ -13,15 +19,18 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
-import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { boardApi } from "@/lib/api";
+import type { BoardData, Column } from "@/lib/kanban";
 
 type KanbanBoardProps = {
   onLogout?: () => void;
 };
 
 export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
-  const [board, setBoard] = useState<BoardData>(() => initialData);
+  const [board, setBoard] = useState<BoardData | null>(null);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -29,7 +38,32 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
     })
   );
 
-  const cardsById = useMemo(() => board.cards, [board.cards]);
+  const loadBoard = useCallback(async () => {
+    setError("");
+    try {
+      setBoard(await boardApi.getBoard());
+    } catch (caughtError) {
+      setError(getErrorMessage(caughtError));
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadBoard();
+  }, [loadBoard]);
+
+  const cardsById = useMemo(() => board?.cards ?? {}, [board?.cards]);
+
+  const runBoardMutation = async (operation: () => Promise<BoardData>) => {
+    setIsSaving(true);
+    setError("");
+    try {
+      setBoard(await operation());
+    } catch (caughtError) {
+      setError(getErrorMessage(caughtError));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
@@ -39,61 +73,74 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
     const { active, over } = event;
     setActiveCardId(null);
 
-    if (!over || active.id === over.id) {
+    if (!board || !over || active.id === over.id) {
       return;
     }
 
-    setBoard((prev) => ({
-      ...prev,
-      columns: moveCard(prev.columns, active.id as string, over.id as string),
-    }));
+    const target = getMoveTarget(
+      board.columns,
+      active.id as string,
+      over.id as string
+    );
+    if (!target) {
+      return;
+    }
+
+    void runBoardMutation(() =>
+      boardApi.moveCard(active.id as string, target.columnId, target.position)
+    );
   };
 
   const handleRenameColumn = (columnId: string, title: string) => {
-    setBoard((prev) => ({
-      ...prev,
-      columns: prev.columns.map((column) =>
-        column.id === columnId ? { ...column, title } : column
-      ),
-    }));
+    void runBoardMutation(() => boardApi.renameColumn(columnId, title));
   };
 
   const handleAddCard = (columnId: string, title: string, details: string) => {
-    const id = createId("card");
-    setBoard((prev) => ({
-      ...prev,
-      cards: {
-        ...prev.cards,
-        [id]: { id, title, details: details || "No details yet." },
-      },
-      columns: prev.columns.map((column) =>
-        column.id === columnId
-          ? { ...column, cardIds: [...column.cardIds, id] }
-          : column
-      ),
-    }));
+    void runBoardMutation(() => boardApi.createCard(columnId, title, details));
   };
 
-  const handleDeleteCard = (columnId: string, cardId: string) => {
-    setBoard((prev) => {
-      return {
-        ...prev,
-        cards: Object.fromEntries(
-          Object.entries(prev.cards).filter(([id]) => id !== cardId)
-        ),
-        columns: prev.columns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cardIds: column.cardIds.filter((id) => id !== cardId),
-              }
-            : column
-        ),
-      };
-    });
+  const handleEditCard = (cardId: string, title: string, details: string) => {
+    void runBoardMutation(() => boardApi.editCard(cardId, title, details));
+  };
+
+  const handleDeleteCard = (cardId: string) => {
+    void runBoardMutation(() => boardApi.deleteCard(cardId));
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
+
+  if (!board) {
+    return (
+      <BoardShell>
+        <div className="rounded-[32px] border border-[var(--stroke)] bg-white/80 p-8 shadow-[var(--shadow)] backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[var(--gray-text)]">
+            Kanban Studio
+          </p>
+          <h1 className="mt-3 font-display text-4xl font-semibold text-[var(--navy-dark)]">
+            Loading board
+          </h1>
+          {error ? (
+            <div className="mt-4">
+              <p role="alert" className="text-sm font-semibold text-[var(--secondary-purple)]">
+                {error}
+              </p>
+              <button
+                type="button"
+                onClick={() => void loadBoard()}
+                className="mt-4 rounded-full bg-[var(--secondary-purple)] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:brightness-110"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-[var(--gray-text)]">
+              Loading your persisted board from the backend.
+            </p>
+          )}
+        </div>
+      </BoardShell>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden">
@@ -120,7 +167,9 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
                 Focus
               </p>
               <p className="mt-2 text-lg font-semibold text-[var(--primary-blue)]">
-                One board. Five columns. Zero clutter.
+                {isSaving
+                  ? "Saving changes..."
+                  : "One board. Five columns. Zero clutter."}
               </p>
               {onLogout ? (
                 <button
@@ -144,6 +193,11 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
               </div>
             ))}
           </div>
+          {error ? (
+            <p role="alert" className="text-sm font-semibold text-[var(--secondary-purple)]">
+              {error}
+            </p>
+          ) : null}
         </header>
 
         <DndContext
@@ -160,6 +214,7 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
                 cards={column.cardIds.map((cardId) => board.cards[cardId])}
                 onRename={handleRenameColumn}
                 onAddCard={handleAddCard}
+                onEditCard={handleEditCard}
                 onDeleteCard={handleDeleteCard}
               />
             ))}
@@ -175,4 +230,50 @@ export const KanbanBoard = ({ onLogout }: KanbanBoardProps) => {
       </main>
     </div>
   );
+};
+
+const BoardShell = ({ children }: { children: ReactNode }) => (
+  <div className="relative overflow-hidden">
+    <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.25)_0%,_rgba(32,157,215,0.05)_55%,_transparent_70%)]" />
+    <main className="relative mx-auto flex min-h-screen max-w-[1500px] flex-col justify-center px-6 py-12">
+      {children}
+    </main>
+  </div>
+);
+
+const getMoveTarget = (
+  columns: Column[],
+  activeId: string,
+  overId: string
+): { columnId: string; position: number } | null => {
+  const targetColumn = columns.find(
+    (column) => column.id === overId || column.cardIds.includes(overId)
+  );
+  if (!targetColumn) {
+    return null;
+  }
+
+  if (targetColumn.id === overId) {
+    const isSameColumn = targetColumn.cardIds.includes(activeId);
+    return {
+      columnId: targetColumn.id,
+      position: targetColumn.cardIds.length - (isSameColumn ? 1 : 0),
+    };
+  }
+
+  const withoutActive = targetColumn.cardIds.filter((cardId) => cardId !== activeId);
+  const overIndex = withoutActive.indexOf(overId);
+
+  return {
+    columnId: targetColumn.id,
+    position: overIndex === -1 ? withoutActive.length : overIndex,
+  };
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Something went wrong while syncing the board.";
 };

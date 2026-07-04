@@ -7,3 +7,9 @@ services:
       - "8000:8000"
     environment:
       PYTHONUNBUFFERED: "1"
+      PM_DATABASE_PATH: "/app/data/pm.sqlite"
+    volumes:
+      - pm-data:/app/data
+
+volumes:
+  pm-data:

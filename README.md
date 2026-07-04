@@ -31,6 +31,10 @@ Dummy credentials для MVP:
 
 - `http://localhost:8000/` отдает login screen, а после входа Kanban board.
 - `http://localhost:8000/api/health` возвращает `{"status":"ok"}`.
+- `http://localhost:8000/api/board` возвращает текущий board JSON.
+
+SQLite database хранится в Docker volume `pm-data` по пути `/app/data/pm.sqlite`.
+Изменения Kanban board сохраняются через backend API и переживают reload.
 
 ## Остановка
 

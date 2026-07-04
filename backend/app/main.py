@@ -1,17 +1,99 @@
 import os
 from pathlib import Path
+from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.database import (
+    BoardNotFoundError,
+    BoardOperationError,
+    BoardRepository,
+    get_database_path,
+    initialize_database,
+)
 
-def create_app(static_dir: str | Path | None = None) -> FastAPI:
+
+class RenameColumnRequest(BaseModel):
+    title: str = Field(min_length=1)
+
+
+class CreateCardRequest(BaseModel):
+    columnId: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    details: str = ""
+
+
+class EditCardRequest(BaseModel):
+    title: str = Field(min_length=1)
+    details: str = ""
+
+
+class MoveCardRequest(BaseModel):
+    columnId: str = Field(min_length=1)
+    position: int = Field(ge=0)
+
+
+def create_app(
+    static_dir: str | Path | None = None,
+    db_path: str | Path | None = None,
+) -> FastAPI:
     app = FastAPI(title="Project Management MVP")
+    database_path = Path(db_path) if db_path is not None else get_database_path()
+    initialize_database(database_path)
+    repository = BoardRepository(database_path)
 
     @app.get("/api/health")
     def read_health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/api/board")
+    def read_board() -> dict[str, Any]:
+        return _run_board_operation(repository.get_board)
+
+    @app.patch("/api/board/columns/{column_id}")
+    def rename_column(
+        column_id: str,
+        request: RenameColumnRequest,
+    ) -> dict[str, Any]:
+        return _run_board_operation(
+            repository.rename_column,
+            column_id,
+            request.title,
+        )
+
+    @app.post("/api/board/cards", status_code=201)
+    def create_card(request: CreateCardRequest) -> dict[str, Any]:
+        return _run_board_operation(
+            repository.create_card,
+            request.columnId,
+            request.title,
+            request.details,
+        )
+
+    @app.patch("/api/board/cards/{card_id}")
+    def edit_card(card_id: str, request: EditCardRequest) -> dict[str, Any]:
+        return _run_board_operation(
+            repository.edit_card,
+            card_id,
+            request.title,
+            request.details,
+        )
+
+    @app.delete("/api/board/cards/{card_id}")
+    def delete_card(card_id: str) -> dict[str, Any]:
+        return _run_board_operation(repository.delete_card, card_id)
+
+    @app.post("/api/board/cards/{card_id}/move")
+    def move_card(card_id: str, request: MoveCardRequest) -> dict[str, Any]:
+        return _run_board_operation(
+            repository.move_card,
+            card_id,
+            request.columnId,
+            request.position,
+        )
 
     static_path = _resolve_static_dir(static_dir)
     if (static_path / "index.html").exists():
@@ -49,6 +131,15 @@ def _resolve_static_dir(static_dir: str | Path | None) -> Path:
         return Path(configured_dir)
 
     return Path(__file__).resolve().parent.parent / "static"
+
+
+def _run_board_operation(operation, *args):
+    try:
+        return operation(*args)
+    except BoardNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except BoardOperationError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 app = create_app()

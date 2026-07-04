@@ -2,7 +2,7 @@
 
 ## Текущее приложение
 
-Эта директория содержит существующий frontend-only MVP demo для Project Management app.
+Эта директория содержит NextJS frontend для Project Management app.
 
 Приложение написано на NextJS с React и TypeScript. Основной route рендерит auth gate из `src/app/page.tsx` через `src/components/AuthGate.tsx`, а после входа показывает `src/components/KanbanBoard.tsx`.
 
@@ -11,24 +11,25 @@
 - `src/app/page.tsx` рендерит Kanban board на `/`.
 - `src/app/layout.tsx` определяет app shell и metadata.
 - `src/app/globals.css` содержит global styles, Tailwind setup и project color variables.
-- `src/lib/kanban.ts` содержит board types, initial demo data, card movement logic и ID creation.
+- `src/lib/api.ts` содержит небольшой API client для backend board routes.
+- `src/lib/kanban.ts` содержит board types, initial demo data для тестов и card movement logic.
 - `src/components/AuthGate.tsx` содержит MVP login/logout flow с dummy credentials `user` и `password`.
-- `src/components/KanbanBoard.tsx` владеет текущим in-memory board state.
+- `src/components/KanbanBoard.tsx` загружает board из backend API и обновляет локальное UI-состояние после successful mutations.
 - `src/components/KanbanColumn.tsx` рендерит droppable column и редактируемый column title.
-- `src/components/KanbanCard.tsx` рендерит sortable card и delete button.
-- `src/components/NewCardForm.tsx` обрабатывает локальное card creation.
+- `src/components/KanbanCard.tsx` рендерит sortable card, edit form и delete button.
+- `src/components/NewCardForm.tsx` обрабатывает card creation через parent API mutation.
 - `src/components/KanbanCardPreview.tsx` рендерит drag overlay preview.
 
 ## Текущее поведение
 
 - Unauthenticated users видят login screen.
 - Session state для MVP хранится в `localStorage`.
-- Board сейчас frontend-only и использует `initialData` из `src/lib/kanban.ts`.
-- Board state хранится в React state внутри `KanbanBoard`.
-- Columns можно переименовывать.
-- Cards можно добавлять и удалять.
+- После login board загружается из `/api/board`.
+- Board state хранится в React state внутри `KanbanBoard` после backend responses.
+- Columns можно переименовывать, изменения сохраняются через backend.
+- Cards можно добавлять, редактировать и удалять через backend.
 - Cards можно перемещать drag and drop через `@dnd-kit`.
-- Изменения пока не сохраняются.
+- Изменения сохраняются в SQLite через backend API и переживают reload.
 
 ## Тесты
 
@@ -43,9 +44,9 @@
 Текущее покрытие тестами включает:
 
 - `src/lib/kanban.test.ts` для card movement behavior.
-- `src/components/KanbanBoard.test.tsx` для rendering, renaming, adding и deleting cards.
+- `src/components/KanbanBoard.test.tsx` для API-loaded rendering, renaming, adding, editing и deleting cards.
 - `src/components/AuthGate.test.tsx` для успешного и неуспешного login.
-- `tests/kanban.spec.ts` для Playwright smoke coverage login/logout, загрузки, добавления и перемещения cards.
+- `tests/kanban.spec.ts` для Playwright smoke coverage login/logout, загрузки, добавления, редактирования, перемещения cards и persistence after reload.
 
 ## Рекомендации по реализации
 

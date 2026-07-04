@@ -96,13 +96,13 @@
 Цель: спроектировать и задокументировать SQLite-backed модель данных Kanban, включая JSON-формат, используемый API и AI.
 
 Чеклист:
-- [ ] Создать документ с дизайном базы данных в `docs/`.
-- [ ] Определить JSON-формат для board, columns, cards и порядка cards.
-- [ ] Определить SQLite tables, которые позже смогут поддерживать нескольких пользователей.
-- [ ] Для MVP оставить один board на signed-in user.
-- [ ] Решить, как создаются initial board data, если база данных пустая.
-- [ ] Задокументировать базовые constraints и update behavior.
-- [ ] Получить подтверждение пользователя перед реализацией базы данных.
+- [x] Создать документ с дизайном базы данных в `docs/`.
+- [x] Определить JSON-формат для board, columns, cards и порядка cards.
+- [x] Определить SQLite tables, которые позже смогут поддерживать нескольких пользователей.
+- [x] Для MVP оставить один board на signed-in user.
+- [x] Решить, как создаются initial board data, если база данных пустая.
+- [x] Задокументировать базовые constraints и update behavior.
+- [x] Получить подтверждение пользователя перед реализацией базы данных.
 
 Тесты:
 - Этап только документационный; автоматические тесты не требуются.
@@ -117,13 +117,13 @@
 Цель: добавить backend API routes для чтения и обновления Kanban board пользователя, с хранением в SQLite.
 
 Чеклист:
-- [ ] Добавить инициализацию SQLite database при старте backend или при первом использовании.
-- [ ] Засеять default board, если для MVP user еще нет board.
-- [ ] Добавить API route для получения current board.
-- [ ] Добавить API routes или один update route для rename columns, create cards, edit cards, delete cards и move cards.
-- [ ] Валидировать request bodies простыми Pydantic models.
-- [ ] Держать API responses согласованными с задокументированным JSON-форматом board.
-- [ ] Добавить понятные error responses для невалидных board operations.
+- [x] Добавить инициализацию SQLite database при старте backend или при первом использовании.
+- [x] Засеять default board, если для MVP user еще нет board.
+- [x] Добавить API route для получения current board.
+- [x] Добавить API routes или один update route для rename columns, create cards, edit cards, delete cards и move cards.
+- [x] Валидировать request bodies простыми Pydantic models.
+- [x] Держать API responses согласованными с задокументированным JSON-форматом board.
+- [x] Добавить понятные error responses для невалидных board operations.
 
 Тесты:
 - Unit-тесты для database initialization и default board creation.
@@ -145,14 +145,14 @@
 Цель: заменить in-memory состояние Kanban на persistence через backend API.
 
 Чеклист:
-- [ ] Добавить небольшой frontend API client.
-- [ ] Загружать board из backend после login.
-- [ ] Сохранять column renames.
-- [ ] Добавить UI для редактирования cards, если он все еще отсутствует во frontend demo.
-- [ ] Сохранять card creation, edits, deletion и moves.
-- [ ] Показывать простые loading и error states.
-- [ ] Обновлять локальное UI-состояние после успешных backend updates.
-- [ ] Оставить UI простым и близким к существующему Kanban demo.
+- [x] Добавить небольшой frontend API client.
+- [x] Загружать board из backend после login.
+- [x] Сохранять column renames.
+- [x] Добавить UI для редактирования cards, если он все еще отсутствует во frontend demo.
+- [x] Сохранять card creation, edits, deletion и moves.
+- [x] Показывать простые loading и error states.
+- [x] Обновлять локальное UI-состояние после успешных backend updates.
+- [x] Оставить UI простым и близким к существующему Kanban demo.
 
 Тесты:
 - Frontend unit/component test для рендера board data, загруженных из API, с использованием mocks.

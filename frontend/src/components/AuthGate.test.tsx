@@ -1,10 +1,28 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { beforeEach, vi } from "vitest";
 import { AuthGate } from "@/components/AuthGate";
+import { boardApi } from "@/lib/api";
+import { initialData } from "@/lib/kanban";
+
+vi.mock("@/lib/api", () => ({
+  boardApi: {
+    getBoard: vi.fn(),
+    renameColumn: vi.fn(),
+    createCard: vi.fn(),
+    editCard: vi.fn(),
+    deleteCard: vi.fn(),
+    moveCard: vi.fn(),
+  },
+}));
+
+const mockedBoardApi = vi.mocked(boardApi);
 
 describe("AuthGate", () => {
   beforeEach(() => {
+    vi.resetAllMocks();
     window.localStorage.clear();
+    mockedBoardApi.getBoard.mockResolvedValue(structuredClone(initialData));
   });
 
   it("shows an error for invalid credentials", async () => {
@@ -32,7 +50,7 @@ describe("AuthGate", () => {
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
     expect(
-      screen.getByRole("heading", { name: "Kanban Studio" })
+      await screen.findByRole("heading", { name: "Kanban Studio" })
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /logout/i }));
