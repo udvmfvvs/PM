@@ -1,1 +1,14 @@
-This folder will contain start and stop scripts for Mac, PC and Linux
+# Заметки для агента по scripts
+
+Эта директория содержит start и stop scripts для локального запуска приложения в Docker.
+
+## Скрипты
+
+- `start.ps1` запускает приложение на Windows.
+- `stop.ps1` останавливает приложение на Windows.
+- `start-mac.sh` запускает приложение на macOS.
+- `stop-mac.sh` останавливает приложение на macOS.
+- `start-linux.sh` запускает приложение на Linux.
+- `stop-linux.sh` останавливает приложение на Linux.
+
+Все скрипты запускаются из корня проекта и используют `docker compose`.

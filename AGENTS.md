@@ -1,53 +1,53 @@
-# The Project Management MVP web app
+# MVP веб-приложения для управления проектами
 
-## Business Requirements
+## Бизнес-требования
 
-This project is building a Project Management App. Key features:
-- A user can sign in
-- When signed in, the user sees a Kanban board representing their project
-- The Kanban board has fixed columns that can be renamed
-- The cards on the Kanban board can be moved with drag and drop, and edited
-- There is an AI chat feature in a sidebar; the AI is able to create / edit / move one or more cards
+Этот проект создает Project Management App. Ключевые возможности:
+- Пользователь может войти в систему.
+- После входа пользователь видит Kanban board, представляющий его проект.
+- Kanban board имеет фиксированные columns, которые можно переименовывать.
+- Cards на Kanban board можно перемещать drag and drop и редактировать.
+- В sidebar есть AI chat; AI может создавать, редактировать или перемещать одну или несколько cards.
 
-## Limitations
+## Ограничения
 
-For the MVP, there will only be a user sign in (hardcoded to 'user' and 'password') but the database will support multiple users for future.
+Для MVP будет только вход пользователя с hardcoded credentials `user` и `password`, но database должна поддерживать нескольких пользователей в будущем.
 
-For the MVP, there will only be 1 Kanban board per signed in user.
+Для MVP у каждого signed-in user будет только один Kanban board.
 
-For the MVP, this will run locally (in a docker container)
+Для MVP приложение будет запускаться локально в docker container.
 
-## Technical Decisions
+## Технические решения
 
-- NextJS frontend
-- Python FastAPI backend, including serving the static NextJS site at /
-- Everything packaged into a Docker container
-- Use "uv" as the package manager for python in the Docker container
-- Use OpenRouter for the AI calls. An OPENROUTER_API_KEY is in .env in the project root
-- Use `openai/gpt-oss-120b` as the model
-- Use SQLLite local database for the database, creating a new db if it doesn't exist
-- Start and Stop server scripts for Mac, PC, Linux in scripts/
+- NextJS frontend.
+- Python FastAPI backend, включая отдачу статического NextJS site на `/`.
+- Все упаковано в Docker container.
+- Использовать `uv` как package manager для Python в Docker container.
+- Использовать OpenRouter для AI calls. `OPENROUTER_API_KEY` находится в `.env` в корне проекта.
+- Использовать `openai/gpt-oss-120b` как модель.
+- Использовать локальную SQLite database, создавая новую database, если она не существует.
+- Скрипты Start и Stop server для Mac, PC и Linux находятся в `scripts/`.
 
-## Starting Point
+## Начальная точка
 
-A working MVP of the frontend has been built and is already in frontend. This is not yet designed for the Docker setup. It's a pure frontend-only demo.
+Рабочий MVP frontend уже создан и находится в `frontend`. Он еще не адаптирован под Docker setup. Сейчас это чистый frontend-only demo.
 
-## Color Scheme
+## Цветовая схема
 
-- Accent Yellow: `#ecad0a` - accent lines, highlights
-- Blue Primary: `#209dd7` - links, key sections
-- Purple Secondary: `#753991` - submit buttons, important actions
-- Dark Navy: `#032147` - main headings
-- Gray Text: `#888888` - supporting text, labels
+- Accent Yellow: `#ecad0a` - accent lines, highlights.
+- Blue Primary: `#209dd7` - links, key sections.
+- Purple Secondary: `#753991` - submit buttons, important actions.
+- Dark Navy: `#032147` - main headings.
+- Gray Text: `#888888` - supporting text, labels.
 
-## Coding standards
+## Стандарты кодирования
 
-1. Use latest versions of libraries and idiomatic approaches as of today
-2. Keep it simple - NEVER over-engineer, ALWAYS simplify, NO unnecessary defensive programming. No extra features - focus on simplicity.
-3. Be concise. Keep README minimal. IMPORTANT: no emojis ever
-4. When hitting issues, always identify root cause before trying a fix. Do not guess. Prove with evidence, then fix the root cause.
+1. Использовать актуальные версии libraries и idiomatic approaches на сегодняшний день.
+2. Делать просто: NEVER over-engineer, ALWAYS simplify, NO unnecessary defensive programming. Никаких extra features, фокус на простоте.
+3. Быть кратким. Держать README минимальным. IMPORTANT: никаких emojis никогда.
+4. При возникновении проблем всегда сначала определить root cause перед исправлением. Не угадывать. Доказать фактами, затем исправить root cause.
 
-## Working documentation
+## Рабочая документация
 
-All documents for planning and executing this project will be in the docs/ directory.
-Please review the docs/PLAN.md document before proceeding.
+Все документы для планирования и выполнения проекта должны находиться в директории `docs/`.
+Перед продолжением необходимо изучить документ `docs/PLAN.md`.

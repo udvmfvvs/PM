@@ -1,0 +1,10 @@
+.git
+.venv
+backend/.venv
+frontend/node_modules
+frontend/.next
+frontend/test-results
+__pycache__
+.pytest_cache
+.ruff_cache
+.DS_Store
