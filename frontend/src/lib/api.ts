@@ -5,6 +5,16 @@ type RequestOptions = {
   body?: unknown;
 };
 
+export type AIChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type AIChatResponse = {
+  message: string;
+  board: BoardData | null;
+};
+
 const requestBoard = async (
   path: string,
   options: RequestOptions = {}
@@ -16,19 +26,37 @@ const requestBoard = async (
   });
 
   if (!response.ok) {
-    const message = await readErrorMessage(response);
+    const message = await readErrorMessage(response, "Board request failed.");
     throw new Error(message);
   }
 
   return response.json();
 };
 
-const readErrorMessage = async (response: Response) => {
+const requestAIChat = async (
+  message: string,
+  history: AIChatMessage[]
+): Promise<AIChatResponse> => {
+  const response = await fetch("/api/ai/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, history }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await readErrorMessage(response, "AI request failed.");
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+};
+
+const readErrorMessage = async (response: Response, fallback: string) => {
   try {
     const payload = await response.json();
-    return payload.detail || "Board request failed.";
+    return payload.detail || fallback;
   } catch {
-    return "Board request failed.";
+    return fallback;
   }
 };
 
@@ -56,4 +84,8 @@ export const boardApi = {
       method: "POST",
       body: { columnId, position },
     }),
+};
+
+export const aiApi = {
+  chat: requestAIChat,
 };

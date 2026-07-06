@@ -171,11 +171,11 @@
 Цель: подтвердить, что backend может вызывать OpenRouter с настроенной моделью.
 
 Чеклист:
-- [ ] Загружать `OPENROUTER_API_KEY` из `.env` в корне проекта.
-- [ ] Настроить OpenRouter с моделью `openai/gpt-oss-120b`.
-- [ ] Добавить минимальный backend AI service module.
-- [ ] Добавить временный или test-only connectivity path для простого prompt `2+2`.
-- [ ] Не логировать secrets.
+- [x] Загружать `OPENROUTER_API_KEY` из `.env` в корне проекта.
+- [x] Настроить OpenRouter с моделью `openai/gpt-oss-120b`.
+- [x] Добавить минимальный backend AI service module.
+- [x] Добавить временный или test-only connectivity path для простого prompt `2+2`.
+- [x] Не логировать secrets.
 
 Тесты:
 - Unit-тест сборки AI service request с замоканной сетью.
@@ -191,15 +191,15 @@
 Цель: отправлять AI JSON board, user message и conversation history, а затем обрабатывать structured output, который может обновить Kanban board.
 
 Чеклист:
-- [ ] Определить schema для structured AI response.
+- [x] Определить schema для structured AI response.
 - [ ] Включить:
-  - user-facing assistant response;
-  - optional Kanban update operation или full board replacement;
-  - достаточную validation, чтобы отклонять invalid board updates.
-- [ ] Отправлять current board JSON, user question и conversation history в OpenRouter.
-- [ ] Применять valid AI board updates через те же backend rules, которые используются обычными API operations.
-- [ ] Сохранять успешные AI updates.
-- [ ] Возвращать assistant message и updated board state, когда это применимо.
+  - [x] user-facing assistant response;
+  - [x] optional Kanban update operation или full board replacement;
+  - [x] достаточную validation, чтобы отклонять invalid board updates.
+- [x] Отправлять current board JSON, user question и conversation history в OpenRouter.
+- [x] Применять valid AI board updates через те же backend rules, которые используются обычными API operations.
+- [x] Сохранять успешные AI updates.
+- [x] Возвращать assistant message и updated board state, когда это применимо.
 
 Тесты:
 - Unit-тест для parsing valid structured AI output.
@@ -217,13 +217,13 @@
 Цель: добавить AI chat sidebar в UI и обновлять Kanban, когда AI его меняет.
 
 Чеклист:
-- [ ] Добавить sidebar chat component, который соответствует существующему visual style.
-- [ ] Хранить и отображать conversation history для текущей session.
-- [ ] Отправлять user messages в backend AI endpoint.
-- [ ] Показывать assistant responses.
-- [ ] Если AI возвращает updated board, автоматически refresh Kanban UI.
-- [ ] Добавить простые loading и error states для chat.
-- [ ] Держать sidebar сфокусированным на MVP: без extra settings и model controls.
+- [x] Добавить sidebar chat component, который соответствует существующему visual style.
+- [x] Хранить и отображать conversation history для текущей session.
+- [x] Отправлять user messages в backend AI endpoint.
+- [x] Показывать assistant responses.
+- [x] Если AI возвращает updated board, автоматически refresh Kanban UI.
+- [x] Добавить простые loading и error states для chat.
+- [x] Держать sidebar сфокусированным на MVP: без extra settings и model controls.
 
 Тесты:
 - Component test для отправки chat message и отображения assistant reply.

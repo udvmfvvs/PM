@@ -7,6 +7,16 @@ from pydantic import BaseModel, Field
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.ai_board import (
+    AIChatRequest,
+    AIChatResponse,
+    AIResponseValidationError,
+    apply_ai_board_replacement,
+    apply_ai_operations,
+    build_ai_board_prompt,
+    parse_ai_structured_response,
+)
+from app.ai_service import AIConfigurationError, AIServiceError, OpenRouterAIService
 from app.database import (
     BoardNotFoundError,
     BoardOperationError,
@@ -36,14 +46,21 @@ class MoveCardRequest(BaseModel):
     position: int = Field(ge=0)
 
 
+class AIConnectivityResponse(BaseModel):
+    prompt: str
+    answer: str
+
+
 def create_app(
     static_dir: str | Path | None = None,
     db_path: str | Path | None = None,
+    ai_service: OpenRouterAIService | None = None,
 ) -> FastAPI:
     app = FastAPI(title="Project Management MVP")
     database_path = Path(db_path) if db_path is not None else get_database_path()
     initialize_database(database_path)
     repository = BoardRepository(database_path)
+    configured_ai_service = ai_service or OpenRouterAIService()
 
     @app.get("/api/health")
     def read_health() -> dict[str, str]:
@@ -94,6 +111,47 @@ def create_app(
             request.columnId,
             request.position,
         )
+
+    @app.post("/api/ai/connectivity-test")
+    def test_ai_connectivity() -> AIConnectivityResponse:
+        prompt = "2+2"
+        try:
+            answer = configured_ai_service.ask(prompt)
+        except AIConfigurationError as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
+        except AIServiceError as error:
+            raise HTTPException(status_code=502, detail=str(error)) from error
+
+        return AIConnectivityResponse(prompt=prompt, answer=answer)
+
+    @app.post("/api/ai/chat")
+    def chat_with_ai(request: AIChatRequest) -> AIChatResponse:
+        current_board = _run_board_operation(repository.get_board)
+        prompt = build_ai_board_prompt(current_board, request.message, request.history)
+        try:
+            raw_ai_response = configured_ai_service.ask(prompt)
+            ai_response = parse_ai_structured_response(raw_ai_response)
+        except AIConfigurationError as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
+        except AIServiceError as error:
+            raise HTTPException(status_code=502, detail=str(error)) from error
+        except AIResponseValidationError as error:
+            raise HTTPException(status_code=502, detail=str(error)) from error
+
+        updated_board: dict[str, Any] | None = None
+        try:
+            if ai_response.operations:
+                updated_board = apply_ai_operations(repository, ai_response.operations)
+            elif ai_response.board is not None:
+                updated_board = apply_ai_board_replacement(
+                    repository,
+                    current_board,
+                    ai_response.board,
+                )
+        except BoardOperationError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+
+        return AIChatResponse(message=ai_response.message, board=updated_board)
 
     static_path = _resolve_static_dir(static_dir)
     if (static_path / "index.html").exists():

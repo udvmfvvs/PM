@@ -79,6 +79,26 @@ const mockBoardApi = async (page: Page, board: BoardData) => {
   });
 };
 
+const mockAIChatApi = async (page: Page, board: BoardData) => {
+  await page.route("**/api/ai/chat", async (route) => {
+    const request = route.request();
+    const payload = await request.postDataJSON();
+    const cardId = "card-ai";
+    board.cards[cardId] = {
+      id: cardId,
+      title: "AI follow-up",
+      details: `Created from: ${payload.message}`,
+    };
+    board.columns[0].cardIds = [...board.columns[0].cardIds, cardId];
+    await route.fulfill({
+      json: {
+        message: "Added an AI follow-up card.",
+        board,
+      },
+    });
+  });
+};
+
 const signIn = async (page: Page) => {
   await page.goto("/");
   await page.getByLabel("Username").fill("user");
@@ -180,6 +200,19 @@ test("edits a card", async ({ page }) => {
   await card.getByRole("button", { name: /save/i }).click();
 
   await expect(page.getByText("Edited in e2e")).toBeVisible();
+});
+
+test("sends an AI chat message and refreshes the board", async ({ page }) => {
+  const board = cloneBoard();
+  await mockBoardApi(page, board);
+  await mockAIChatApi(page, board);
+  await signIn(page);
+
+  await page.getByLabel("Message AI").fill("Create a follow-up task");
+  await page.getByRole("button", { name: /send message/i }).click();
+
+  await expect(page.getByText("Added an AI follow-up card.")).toBeVisible();
+  await expect(page.getByText("AI follow-up")).toBeVisible();
 });
 
 const moveCardInBoard = (

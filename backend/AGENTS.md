@@ -26,6 +26,8 @@ Backend находится в этой директории и является 
 - `PATCH /api/board/cards/{card_id}` редактирует card.
 - `DELETE /api/board/cards/{card_id}` удаляет card.
 - `POST /api/board/cards/{card_id}/move` перемещает card в column на заданную `position`.
+- `POST /api/ai/connectivity-test` проверяет OpenRouter connectivity через prompt `2+2`.
+- `POST /api/ai/chat` отправляет AI текущий board, user message и history, затем применяет valid board updates.
 
 ## Рекомендации
 

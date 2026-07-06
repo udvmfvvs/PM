@@ -15,6 +15,7 @@
 - `src/lib/kanban.ts` содержит board types, initial demo data для тестов и card movement logic.
 - `src/components/AuthGate.tsx` содержит MVP login/logout flow с dummy credentials `user` и `password`.
 - `src/components/KanbanBoard.tsx` загружает board из backend API и обновляет локальное UI-состояние после successful mutations.
+- `src/components/AIChatSidebar.tsx` хранит session conversation history, отправляет messages в backend AI endpoint и применяет updated board.
 - `src/components/KanbanColumn.tsx` рендерит droppable column и редактируемый column title.
 - `src/components/KanbanCard.tsx` рендерит sortable card, edit form и delete button.
 - `src/components/NewCardForm.tsx` обрабатывает card creation через parent API mutation.
@@ -30,6 +31,7 @@
 - Cards можно добавлять, редактировать и удалять через backend.
 - Cards можно перемещать drag and drop через `@dnd-kit`.
 - Изменения сохраняются в SQLite через backend API и переживают reload.
+- AI sidebar отправляет chat messages в `/api/ai/chat`; если backend возвращает updated board, UI обновляется без reload.
 
 ## Тесты
 
@@ -44,9 +46,9 @@
 Текущее покрытие тестами включает:
 
 - `src/lib/kanban.test.ts` для card movement behavior.
-- `src/components/KanbanBoard.test.tsx` для API-loaded rendering, renaming, adding, editing и deleting cards.
+- `src/components/KanbanBoard.test.tsx` для API-loaded rendering, renaming, adding, editing, deleting cards и AI chat refresh.
 - `src/components/AuthGate.test.tsx` для успешного и неуспешного login.
-- `tests/kanban.spec.ts` для Playwright smoke coverage login/logout, загрузки, добавления, редактирования, перемещения cards и persistence after reload.
+- `tests/kanban.spec.ts` для Playwright smoke coverage login/logout, загрузки, добавления, редактирования, перемещения cards, persistence after reload и AI chat.
 
 ## Рекомендации по реализации
 

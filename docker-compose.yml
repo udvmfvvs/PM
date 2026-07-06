@@ -8,6 +8,7 @@ services:
     environment:
       PYTHONUNBUFFERED: "1"
       PM_DATABASE_PATH: "/app/data/pm.sqlite"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
     volumes:
       - pm-data:/app/data
 

@@ -2,10 +2,13 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, vi } from "vitest";
 import { KanbanBoard } from "@/components/KanbanBoard";
-import { boardApi } from "@/lib/api";
+import { aiApi, boardApi } from "@/lib/api";
 import { initialData, type BoardData } from "@/lib/kanban";
 
 vi.mock("@/lib/api", () => ({
+  aiApi: {
+    chat: vi.fn(),
+  },
   boardApi: {
     getBoard: vi.fn(),
     renameColumn: vi.fn(),
@@ -17,6 +20,7 @@ vi.mock("@/lib/api", () => ({
 }));
 
 const mockedBoardApi = vi.mocked(boardApi);
+const mockedAIApi = vi.mocked(aiApi);
 
 const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
 const cloneBoard = (board: BoardData = initialData): BoardData =>
@@ -26,6 +30,10 @@ describe("KanbanBoard", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockedBoardApi.getBoard.mockResolvedValue(cloneBoard());
+    mockedAIApi.chat.mockResolvedValue({
+      message: "No board changes needed.",
+      board: null,
+    });
   });
 
   it("renders API-loaded board data", async () => {
@@ -127,5 +135,50 @@ describe("KanbanBoard", () => {
       "Edited details"
     );
     expect(screen.getByText("Edited card")).toBeInTheDocument();
+  });
+
+  it("sends a chat message and displays the assistant reply", async () => {
+    mockedAIApi.chat.mockResolvedValue({
+      message: "I can help with that.",
+      board: null,
+    });
+
+    render(<KanbanBoard />);
+    await screen.findByText("Backlog");
+    await userEvent.type(
+      screen.getByLabelText("Message AI"),
+      "What should I work on next?"
+    );
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
+
+    await waitFor(() =>
+      expect(mockedAIApi.chat).toHaveBeenCalledWith(
+        "What should I work on next?",
+        []
+      )
+    );
+    expect(await screen.findByText("I can help with that.")).toBeInTheDocument();
+  });
+
+  it("applies an AI-updated board without a reload", async () => {
+    const updatedBoard = cloneBoard();
+    updatedBoard.cards["card-ai"] = {
+      id: "card-ai",
+      title: "AI-created card",
+      details: "Added through chat.",
+    };
+    updatedBoard.columns[0].cardIds.push("card-ai");
+    mockedAIApi.chat.mockResolvedValue({
+      message: "Added a card.",
+      board: updatedBoard,
+    });
+
+    render(<KanbanBoard />);
+    await screen.findByText("Backlog");
+    await userEvent.type(screen.getByLabelText("Message AI"), "Add a card");
+    await userEvent.click(screen.getByRole("button", { name: /send message/i }));
+
+    expect(await screen.findByText("AI-created card")).toBeInTheDocument();
+    expect(mockedBoardApi.getBoard).toHaveBeenCalledOnce();
   });
 });
